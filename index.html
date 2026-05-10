@@ -848,6 +848,102 @@ body {
       </div>
     `).join('');
   }
+
+  // ── POPUP BERHASIL ──
+  function showPopup(nama, sekolah, id, time) {
+    document.getElementById('popupNama').textContent    = nama;
+    document.getElementById('popupSekolah').textContent = sekolah;
+    document.getElementById('popupId').textContent      = id;
+    document.getElementById('popupTime').textContent    = '🕐 ' + time + ' WITA';
+    document.getElementById('popupOverlay').classList.add('show');
+    startConfetti();
+    playSuccessSound();
+    vibrateDevice();
+  }
+
+  function closePopup() {
+    document.getElementById('popupOverlay').classList.remove('show');
+    stopConfetti();
+  }
+
+  // ── CONFETTI ──
+  const confCanvas = document.getElementById('confettiCanvas');
+  const confCtx    = confCanvas.getContext('2d');
+  let confParticles = [], confAnimId = null;
+  const CONF_COLORS = ['#38a9e4','#c9993a','#16a34a','#ef4444','#8b5cf6','#f59e0b','#ec4899'];
+
+  function startConfetti() {
+    confCanvas.style.display = 'block';
+    confCanvas.width  = window.innerWidth;
+    confCanvas.height = window.innerHeight;
+    confParticles = [];
+    for (let i = 0; i < 130; i++) {
+      confParticles.push({
+        x:    Math.random() * confCanvas.width,
+        y:    Math.random() * confCanvas.height - confCanvas.height,
+        w:    6 + Math.random() * 8,
+        h:    10 + Math.random() * 6,
+        color: CONF_COLORS[Math.floor(Math.random() * CONF_COLORS.length)],
+        rot:  Math.random() * Math.PI * 2,
+        rotV: (Math.random() - .5) * .15,
+        vy:   3 + Math.random() * 4,
+        vx:   (Math.random() - .5) * 2.5,
+      });
+    }
+    if (confAnimId) cancelAnimationFrame(confAnimId);
+    animateConfetti();
+    setTimeout(stopConfetti, 4500);
+  }
+
+  function animateConfetti() {
+    confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+    confParticles.forEach(p => {
+      p.y   += p.vy;
+      p.x   += p.vx;
+      p.rot += p.rotV;
+      if (p.y > confCanvas.height) { p.y = -20; p.x = Math.random() * confCanvas.width; }
+      confCtx.save();
+      confCtx.translate(p.x + p.w/2, p.y + p.h/2);
+      confCtx.rotate(p.rot);
+      confCtx.fillStyle = p.color;
+      confCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      confCtx.restore();
+    });
+    confAnimId = requestAnimationFrame(animateConfetti);
+  }
+
+  function stopConfetti() {
+    if (confAnimId) { cancelAnimationFrame(confAnimId); confAnimId = null; }
+    confCanvas.style.display = 'none';
+    confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  }
+
+  // ── SUARA ──
+  function playSuccessSound() {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        const osc  = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = ac.currentTime + i * 0.14;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.28, t + 0.05);
+        gain.gain.linearRampToValueAtTime(0, t + 0.28);
+        osc.start(t);
+        osc.stop(t + 0.32);
+      });
+    } catch(e) {}
+  }
+
+  // ── GETAR ──
+  function vibrateDevice() {
+    try { if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300]); } catch(e) {}
+  }
+
 </script>
 </body>
 </html>
