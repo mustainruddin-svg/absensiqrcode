@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanner Absensi — Smart Teacher Bootcamp 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root {
+  --sky: #38a9e4;
+  --sky-dark: #1a7db8;
+  --sky-light: #e8f5fd;
+  --gold: #c9993a;
+  --gold-light: #f5e9d0;
+  --white: #ffffff;
+  --text: #1a2a3a;
+  --muted: #5a7080;
+  --light: #8fa0b0;
+  --border: #d0e5f5;
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --success-border: #86efac;
+  --error: #dc2626;
+  --error-light: #fee2e2;
+  --warn: #d97706;
+  --warn-light: #fef3c7;
+  --bg: #f0f7ff;
+  --radius: 16px;
+  --shadow: 0 8px 32px rgba(56,169,228,0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(135deg, #1a5f8a 0%, #1a7db8 50%, #38a9e4 100%);
+  padding: 20px 24px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.header::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 28px;
+  background: var(--bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.header-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex; align-items: center; gap: 14px;
+}
+.header-icon {
+  width: 48px; height: 48px;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.header-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; color: #fff; font-weight: 700;
+}
+.header-text p {
+  font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 2px;
+}
+
+/* ── CONTAINER ── */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+/* ── CLOCK ── */
+.live-clock {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.clock-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--sky-dark);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+.clock-date {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── SCANNER BOX ── */
+.scanner-card {
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.scanner-header {
+  background: linear-gradient(90deg, var(--sky-light) 0%, #f5faff 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.scanner-header-icon {
+  width: 32px; height: 32px;
+  background: var(--sky);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.scanner-header-icon svg { width: 17px; height: 17px; color: #fff; }
+.scanner-header-title { font-size: 14px; font-weight: 600; color: var(--sky-dark); }
+.scanner-header-status {
+  margin-left: auto;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 50px;
+  display: flex; align-items: center; gap: 5px;
+}
+.scanner-header-status.active { background: #dcfce7; color: var(--success); }
+.scanner-header-status.inactive { background: var(--error-light); color: var(--error); }
+.dot { width: 7px; height: 7px; border-radius: 50%; }
+.dot.green { background: var(--success); animation: pulse-dot 1.5s infinite; }
+.dot.red { background: var(--error); }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.scanner-body { padding: 20px; }
+
+#reader {
+  width: 100% !important;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  min-height: 260px;
+  display: flex; align-items: center; justify-content: center;
+}
+#reader video { border-radius: 12px !important; }
+#reader img { display: none !important; }
+
+.scanner-placeholder {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--light);
+}
+.scanner-placeholder svg { width: 56px; height: 56px; margin-bottom: 12px; opacity: 0.4; }
+.scanner-placeholder p { font-size: 14px; }
+
+.btn-scan {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  background: linear-gradient(135deg, var(--sky-dark), var(--sky));
+  color: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  padding: 13px;
+  border: none; border-radius: 12px;
+  cursor: pointer;
+  margin-top: 14px;
+  box-shadow: 0 4px 16px rgba(56,169,228,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-scan:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56,169,228,0.4); }
+.btn-scan:active { transform: translateY(0); }
+.btn-scan svg { width: 17px; height: 17px; }
+
+.btn-stop {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  background: var(--error-light);
+  color: var(--error);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  padding: 13px;
+  border: 1.5px solid #fca5a5;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: background 0.15s;
+}
+.btn-stop:hover { background: #fecaca; }
+
+/* ── RESULT CARD ── */
+.result-card {
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+  display: none;
+  animation: slideUp 0.3s ease;
+  border: 1.5px solid;
+}
+@keyframes slideUp { from { transform: translateY(10px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+.result-card.success {
+  background: var(--success-light);
+  border-color: var(--success-border);
+}
+.result-card.error {
+  background: var(--error-light);
+  border-color: #fca5a5;
+}
+.result-card.warn {
+  background: var(--warn-light);
+  border-color: #fcd34d;
+}
+
+.result-top {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px;
+}
+.result-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.success .result-icon { background: #bbf7d0; }
+.error   .result-icon { background: #fecaca; }
+.warn    .result-icon { background: #fde68a; }
+
+.result-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.success .result-label { color: var(--success); }
+.error   .result-label { color: var(--error); }
+.warn    .result-label { color: var(--warn); }
+
+.result-name { font-size: 18px; font-weight: 700; color: var(--text); line-height: 1.2; }
+
+.result-rows { display: flex; flex-direction: column; gap: 7px; }
+.result-row { display: flex; gap: 10px; font-size: 13px; }
+.result-key { color: var(--muted); min-width: 80px; flex-shrink: 0; }
+.result-val { color: var(--text); font-weight: 500; }
+.result-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 600;
+  color: var(--sky-dark);
+  background: var(--sky-light);
+  padding: 3px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.result-msg { font-size: 13px; margin-top: 10px; line-height: 1.6; }
+.error .result-msg { color: var(--error); }
+.warn  .result-msg { color: var(--warn); }
+
+/* ── RIWAYAT ── */
+.log-card {
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(26,42,58,0.07);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.log-header {
+  background: linear-gradient(90deg, var(--sky-light), #f5faff);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.log-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 600; color: var(--sky-dark);
+}
+.log-title-icon {
+  width: 32px; height: 32px;
+  background: var(--sky);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.log-title-icon svg { width: 16px; height: 16px; color: #fff; }
+.log-count {
+  background: var(--sky);
+  color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 50px;
+}
+
+.log-body { padding: 12px; max-height: 320px; overflow-y: auto; }
+.log-empty {
+  text-align: center;
+  padding: 30px;
+  color: var(--light);
+  font-size: 13px;
+}
+.log-empty svg { width: 36px; height: 36px; margin-bottom: 8px; opacity: 0.35; }
+
+.log-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  background: #f9fbfe;
+  border: 1px solid #edf2f7;
+  animation: slideUp 0.25s ease;
+}
+.log-num {
+  width: 26px; height: 26px;
+  background: var(--sky-light);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--sky-dark);
+  flex-shrink: 0;
+}
+.log-info { flex: 1; min-width: 0; }
+.log-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-school { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-time-wrap { text-align: right; flex-shrink: 0; }
+.log-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 600;
+  color: var(--sky-dark);
+  background: var(--sky-light);
+  padding: 2px 8px; border-radius: 5px;
+  display: inline-block;
+}
+.log-id { font-size: 10px; color: var(--light); margin-top: 3px; }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 24px 16px 0;
+  font-size: 11px; color: var(--light); line-height: 1.8;
+}
+.footer strong { color: var(--sky-dark); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-icon">📷</div>
+    <div class="header-text">
+      <h1>Scanner Absensi</h1>
+      <p>Smart Teacher Bootcamp 2026 · Graha Nusa, Mamuju</p>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- JAM LIVE -->
+  <div class="live-clock">
+    <div class="clock-time" id="clockTime">00:00:00</div>
+    <div class="clock-date" id="clockDate">—</div>
+  </div>
+
+  <!-- HASIL SCAN -->
+  <div class="result-card" id="resultCard">
+    <div class="result-top">
+      <div class="result-icon" id="resultIcon">—</div>
+      <div>
+        <div class="result-label" id="resultLabel">—</div>
+        <div class="result-name" id="resultName">—</div>
+      </div>
+    </div>
+    <div class="result-rows" id="resultRows"></div>
+    <div class="result-msg" id="resultMsg"></div>
+  </div>
+
+  <!-- SCANNER -->
+  <div class="scanner-card">
+    <div class="scanner-header">
+      <div class="scanner-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+      </div>
+      <div class="scanner-header-title">Kamera QR Scanner</div>
+      <div class="scanner-header-status inactive" id="statusBadge">
+        <div class="dot red" id="statusDot"></div>
+        <span id="statusText">Nonaktif</span>
+      </div>
+    </div>
+    <div class="scanner-body">
+      <div id="reader">
+        <div class="scanner-placeholder" id="placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          <p>Tekan tombol di bawah untuk<br>mengaktifkan kamera</p>
+        </div>
+      </div>
+      <button class="btn-scan" id="btnStart" onclick="startScanner()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Aktifkan Kamera Scanner
+      </button>
+      <button class="btn-stop" id="btnStop" onclick="stopScanner()" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        Hentikan Scanner
+      </button>
+    </div>
+  </div>
+
+  <!-- RIWAYAT ABSENSI -->
+  <div class="log-card">
+    <div class="log-header">
+      <div class="log-title">
+        <div class="log-title-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        Riwayat Kehadiran Hari Ini
+      </div>
+      <div class="log-count" id="logCount">0</div>
+    </div>
+    <div class="log-body" id="logBody">
+      <div class="log-empty" id="logEmpty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <p>Belum ada peserta yang hadir</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <strong>Share Edu Indonesia Kab. Mamuju & PENA Indonesia</strong><br>
+    Berbagi - Berpadu - Berdaya<br>
+    Smart Teacher Bootcamp 2026
+  </div>
+
+</div>
+
+<script>
+  // ── CONFIG ──
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwuSGeH4NGIuYPFYUGVmJaQMzmWd7FyUBmvOW5_yrpX6rA6smx4dFx0lqIsfO9qm7qY-g/exec";
+
+  let html5QrCode = null;
+  let isScanning  = false;
+  let scannedIDs  = new Set(); // hindari double scan
+  let logList     = [];
+  let scanCooldown = false;
+
+  // ── JAM LIVE ──
+  const DAYS = ['Ahad','Senin','Selasa','Rabu','Kamis','Jum\'at','Sabtu'];
+  const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+  function updateClock() {
+    const now = new Date();
+    const hh  = String(now.getHours()).padStart(2,'0');
+    const mm  = String(now.getMinutes()).padStart(2,'0');
+    const ss  = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clockTime').textContent = hh + ':' + mm + ':' + ss;
+    document.getElementById('clockDate').textContent =
+      DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear() + ' WITA';
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ── FORMAT WAKTU ──
+  function getNowFormatted() {
+    const now = new Date();
+    const hh  = String(now.getHours()).padStart(2,'0');
+    const mm  = String(now.getMinutes()).padStart(2,'0');
+    const ss  = String(now.getSeconds()).padStart(2,'0');
+    const dd  = String(now.getDate()).padStart(2,'0');
+    const mo  = String(now.getMonth()+1).padStart(2,'0');
+    const yy  = now.getFullYear();
+    return {
+      time:     hh + ':' + mm + ':' + ss,
+      datetime: dd + '/' + mo + '/' + yy + ' ' + hh + ':' + mm + ':' + ss
+    };
+  }
+
+  // ── SCANNER ──
+  function startScanner() {
+    document.getElementById('placeholder').style.display = 'none';
+    html5QrCode = new Html5Qrcode("reader");
+
+    Html5Qrcode.getCameras().then(cameras => {
+      if (!cameras || cameras.length === 0) {
+        showResult('error','❌','Kamera tidak ditemukan','','Tidak ada kamera yang tersedia di perangkat ini.');
+        return;
+      }
+
+      // Pilih kamera belakang jika ada
+      const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+
+      html5QrCode.start(
+        cam.id,
+        { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+        onScanSuccess,
+        () => {}
+      ).then(() => {
+        isScanning = true;
+        setStatus(true);
+        document.getElementById('btnStart').style.display = 'none';
+        document.getElementById('btnStop').style.display  = 'flex';
+      }).catch(err => {
+        showResult('error','❌','Kamera gagal diaktifkan','', String(err));
+      });
+
+    }).catch(err => {
+      showResult('error','❌','Akses kamera ditolak','','Izinkan akses kamera di browser Anda, lalu coba lagi.');
+    });
+  }
+
+  function stopScanner() {
+    if (html5QrCode && isScanning) {
+      html5QrCode.stop().then(() => {
+        isScanning = false;
+        setStatus(false);
+        document.getElementById('btnStart').style.display = 'flex';
+        document.getElementById('btnStop').style.display  = 'none';
+        document.getElementById('placeholder').style.display = 'block';
+      });
+    }
+  }
+
+  function setStatus(active) {
+    const badge = document.getElementById('statusBadge');
+    const dot   = document.getElementById('statusDot');
+    const text  = document.getElementById('statusText');
+    if (active) {
+      badge.className = 'scanner-header-status active';
+      dot.className   = 'dot green';
+      text.textContent = 'Aktif';
+    } else {
+      badge.className = 'scanner-header-status inactive';
+      dot.className   = 'dot red';
+      text.textContent = 'Nonaktif';
+    }
+  }
+
+  // ── SAAT QR BERHASIL DIBACA ──
+  function onScanSuccess(decodedText) {
+    if (scanCooldown) return;
+    scanCooldown = true;
+    setTimeout(() => { scanCooldown = false; }, 3000);
+
+    let data;
+    try {
+      data = JSON.parse(decodedText);
+    } catch(e) {
+      showResult('error','❌','QR Code Tidak Valid','','QR Code ini tidak dikenali. Pastikan menggunakan tiket resmi STB 2026.');
+      return;
+    }
+
+    // Validasi field wajib
+    if (!data.id || !data.nama) {
+      showResult('error','❌','Data Tidak Valid','','QR Code tidak memiliki data peserta yang lengkap.');
+      return;
+    }
+
+    // Cek double scan
+    if (scannedIDs.has(data.id)) {
+      showResult('warn','⚠️', data.nama, data.sekolah || '—',
+        'Peserta ini sudah tercatat hadir sebelumnya. Tidak dicatat ulang.');
+      return;
+    }
+
+    // Catat hadir
+    scannedIDs.add(data.id);
+    const waktu = getNowFormatted();
+    saveAbsensi(data, waktu);
+    addToLog(data, waktu);
+    showResult('success','✅', data.nama, data.sekolah || '—', null, data.id, waktu.time);
+  }
+
+  // ── KIRIM KE GOOGLE SHEETS ──
+  function saveAbsensi(data, waktu) {
+    const params = new URLSearchParams({
+      action:      'absensi',
+      peserta_id:  data.id,
+      nama:        data.nama,
+      sekolah:     data.sekolah || '',
+      waktu_hadir: waktu.datetime
+    });
+
+    fetch(APPS_SCRIPT_URL + '?' + params.toString(), {
+      method: 'GET',
+      mode:   'no-cors'
+    }).catch(() => {});
+  }
+
+  // ── TAMPILKAN HASIL ──
+  function showResult(type, icon, nama, sekolah, msg, id, time) {
+    const card  = document.getElementById('resultCard');
+    card.className = 'result-card ' + type;
+
+    document.getElementById('resultIcon').textContent  = icon;
+    document.getElementById('resultLabel').textContent =
+      type === 'success' ? '✔ HADIR TERCATAT' :
+      type === 'warn'    ? '⚠ SUDAH TERCATAT' : '✕ SCAN GAGAL';
+    document.getElementById('resultName').textContent  = nama;
+
+    let rowsHTML = '';
+    if (sekolah) rowsHTML += `<div class="result-row"><span class="result-key">Sekolah</span><span class="result-val">${sekolah}</span></div>`;
+    if (id)      rowsHTML += `<div class="result-row"><span class="result-key">ID Peserta</span><span class="result-val" style="font-family:monospace;font-size:12px;color:#1a7db8;">${id}</span></div>`;
+    if (time)    rowsHTML += `<div class="result-row"><span class="result-key">Jam Hadir</span><span class="result-val"><span class="result-time">${time} WITA</span></span></div>`;
+    document.getElementById('resultRows').innerHTML = rowsHTML;
+    document.getElementById('resultMsg').textContent = msg || '';
+
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Auto hide setelah 6 detik untuk success
+    if (type === 'success') {
+      setTimeout(() => { card.style.display = 'none'; }, 6000);
+    }
+  }
+
+  // ── LOG RIWAYAT ──
+  function addToLog(data, waktu) {
+    logList.unshift({ data, waktu, index: logList.length + 1 });
+    renderLog();
+  }
+
+  function renderLog() {
+    const body = document.getElementById('logBody');
+    const empty = document.getElementById('logEmpty');
+    document.getElementById('logCount').textContent = logList.length;
+
+    if (logList.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    body.innerHTML = logList.map((item, i) => `
+      <div class="log-item">
+        <div class="log-num">${logList.length - i}</div>
+        <div class="log-info">
+          <div class="log-name">${item.data.nama}</div>
+          <div class="log-school">${item.data.sekolah || '—'}</div>
+        </div>
+        <div class="log-time-wrap">
+          <div class="log-time">${item.waktu.time}</div>
+          <div class="log-id">${item.data.id}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>
